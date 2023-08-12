@@ -88,11 +88,16 @@ class Parser:
         return dump_in
 
     @staticmethod
-    def print_table(obj) -> None:
+    def print_table(obj, field_sort) -> None:
         """
         Метод формирует поля для вывода информации в табличном варианте.
         """
-
+        # Сортировка словаря по значениям полей
+        if field_sort:
+            fields = {'1': 'name', '2': 'year', '3': 'isSeries', '4': 'votes', '5': 'countries'}
+            obj = {x: obj[x] for x in sorted(obj.keys(), key=lambda a:
+            int(obj[a][text].get(fields[field_sort]).get('kp', 0)) if field_sort == '4' else str(obj[a][text].get(fields[field_sort], ''))
+                                             )}
         # В данном списке формируются поля для таблицы. В случае длинных текстов, они обрезаются.
         list_mov = [[ind + 1,
                      key,
