@@ -12,7 +12,8 @@ RANDOM_MOVIE = '/v1/movie/random'
 INFO = '/v1.3/movie/'
 ALL_SEAS_EPIS = '/v1/season'
 REVIEW = '/v1/review'
-FIELDS = {'1': 'name', '2': 'year', '3': 'isSeries', '4': 'votes', '5': 'countries'}
+FIELDS = {'1': 'name', '2': 'year', '3': 'type', '4': 'votes', '5': 'countries',
+          '11': 'name', '22': 'year', '33': 'type', '44': 'votes', '55': 'countries'}
 
 
 class Parser:
@@ -62,9 +63,10 @@ class Parser:
         # Проверка соответствия типа полученного объекта obj и наличия в объекте ключа id.
         if isinstance(obj, dict) and (id_movie := obj.get('id', 0)):
             id_movie = str(id_movie)
+            isSeries = obj['isSeries']
             dump_temp = dict.fromkeys(['Общая информация о фильме'], obj)
             dump_temp.update(
-                {'Информация о сезонах и эпизодах': self.parse_json(endpoint=ALL_SEAS_EPIS, id_movie=id_movie, prnt=prnt)})
+                {'Информация о сезонах и эпизодах': self.parse_json(endpoint=ALL_SEAS_EPIS, id_movie=id_movie, prnt=prnt) if isSeries else {}})
             dump_temp.update({'Отзывы зрителей': self.parse_json(endpoint=REVIEW, id_movie=id_movie, prnt=prnt)})
             dump_in.update({id_movie: dump_temp})
             with open(f'dumps/movies_info.json', 'w', encoding='utf-8') as file:
@@ -88,28 +90,29 @@ class Parser:
         return dump_in
 
     @staticmethod
-    def print_table(obj, field_sort) -> None:
+    def print_table(obj, field_sort=None, is_reverse=False) -> None:
         """
         Метод формирует поля для вывода информации в табличном варианте.
         """
         # Сортировка словаря по значениям полей
+
         if field_sort:
             obj = {x: obj[x] for x in sorted(obj.keys(), key=lambda a:
-            int(obj[a][text].get(FIELDS[field_sort]).get('kp', 0)) if field_sort == '4' else str(
-                obj[a][text].get(FIELDS[field_sort], ''))
+            int(obj[a][text].get(FIELDS[field_sort]).get('kp', 0)) if field_sort in ('4', '44') else str(
+                obj[a][text].get(FIELDS[field_sort], '')), reverse=is_reverse
                                              )}
         # В данном списке формируются поля для таблицы. В случае длинных текстов, они обрезаются.
         list_mov = [[ind + 1,
                      key,
                      list(map(lambda x: x[:25] + '...' if len(x) > 25 else x, [str(obj[key][text]['name'])]))[0],
                      obj[key][text]['year'],
-                     'да' if obj[key][text]['isSeries'] else 'нет',
+                     obj[key][text]['type'],
                      obj[key][text]['votes'].get('kp', '-'),
                      list(map(lambda x: x[:75] + ' (...)' if len(x) > 75 else x,
                               [str(obj[key][text].get('description', ''))]))[0],
                      ', '.join(list(map(lambda x: x['name'] if x else '', obj[key][text]['countries'])))]
                     for ind, key in enumerate(obj.keys())]
         my_table = PrettyTable()
-        my_table.field_names = ["id", "mov_id", "name", "year", "сериал", "голоса КП", "описание", "страна"]
+        my_table.field_names = ["id", "mov_id", "name", "year", "голосов", "рейтинг", "описание", "страна"]
         my_table.add_rows(list_mov)
         print(my_table)

@@ -16,8 +16,13 @@ def main() -> None:
         print('\nВыберите желаемый пункт меню:')
         ask_1 = input(main_menu)
         if ask_1 == '1':
-            numb = int(input('Введите количество запросов к API\n'))
-            ask_2 = input(ask_print)
+            while True:
+                try:
+                    numb = int(input('Введите количество запросов к API\n'))
+                    ask_2 = input(ask_print)
+                    break
+                except ValueError:
+                    print('Ошибка ввода')
             [parse.make_json(prnt=ask_2 == '1') for _ in range(numb)]
             if parse.count:
                 print(f'Количество записей в базе данных увеличено на {parse.count}\n')
@@ -31,15 +36,22 @@ def main() -> None:
         elif ask_1 == '3':
             ask_2 = input('Будет выведена таблица с краткой информацией о фильмах.'
                           ' Если же хотите вывести все данные, введите 1, если только таблицу - любой символ\n')
-            ask_3 = input('Введите для сортировки 1: по имени, 2: по году, 3: по типу, 4: по голосам, 5: по стране'
-                          '\nБез сортировки - просто нажмите ввод\n')
-            field_sort = ask_3 if ask_3 in ('1', '2', '3', '4', '5') else None
-            res = parse.get_json(prnt=ask_2=='1')
-            print('Краткая информация о фильмах из базы данных:\n')
-            parse.print_table(res, field_sort=field_sort)
-            id_mov = input('Введите id, чтобы получить данные фильма из дампа. Выход - введите пробел\n')
-            if id_mov:
-                parse.get_json(prnt=True, id_movie=id_mov)
+            res = parse.get_json(prnt=ask_2 == '1')
+            parse.print_table(obj=res)
+            while True:
+                ask_3 = input('Введите для сортировки по возрастанию: 1: по имени, 2: по году, 3: по типу, 4: по голосам, 5: по стране. '
+                              'По убыванию - введите двойное число'
+                              '\nИли введите id для поиска фильма. Выход в основное меню - нажмите энтер.\n')
+                if ask_3 in ('1', '2', '3', '4', '5', '11', '22', '33', '44', '55'):
+                    field_sort = ask_3
+                    is_reverse = len(ask_3) == 2
+                    parse.print_table(obj=res, field_sort=field_sort, is_reverse=is_reverse)
+                elif ask_3 != '':
+                    parse.get_json(prnt=True, id_movie=ask_3)
+                    input('Нажмите ввод для вывода таблицы ')
+                    parse.print_table(obj=res)
+                else:
+                    break
         else:
             break
 
